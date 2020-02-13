@@ -1,14 +1,20 @@
 /* @flow strict-local */
 import { applyMiddleware, compose, createStore } from 'redux';
 import type { Store } from 'redux';
+import thunkMiddleware from 'redux-thunk';
+import { createLogger } from 'redux-logger';
+import createActionBuffer from 'redux-action-buffer';
+import { createReactNavigationReduxMiddleware } from 'react-navigation-redux-helpers';
 import { persistStore, autoRehydrate } from 'redux-persist';
 import type { Config } from 'redux-persist';
 
 import type { Action, GlobalState } from '../types';
+import config from '../config';
+import { REHYDRATE } from '../actionConstants';
 import rootReducer from './reducers';
-import middleware from './middleware';
 import ZulipAsyncStorage from './ZulipAsyncStorage';
 import createMigration from '../redux-persist-migrate/index';
+import { getNav } from '../nav/navSelectors';
 
 // AsyncStorage.clear(); // use to reset storage during development
 
@@ -132,6 +138,31 @@ const migrations: { [string]: (GlobalState) => GlobalState } = {
 };
 
 /**
+ * Return a list of Redux middleware objects to use in our Redux store.
+ *
+ * See Redux docs on its "middleware API":
+ *   https://redux.js.org/api/applymiddleware/
+ */
+function listMiddleware() {
+  const result = [
+    createReactNavigationReduxMiddleware('root', getNav),
+    createActionBuffer(REHYDRATE),
+    thunkMiddleware,
+  ];
+  if (config.enableReduxLogging) {
+    result.push(
+      createLogger({
+        duration: true,
+        // See docs/howto/debugging.md.
+        // diff: true,
+        // predicate: (getState, action) => action.type === 'MESSAGE_FETCH_COMPLETE',
+      }),
+    );
+  }
+  return result;
+}
+
+/**
  * The Redux store.  We store nearly all application data here.
  *
  * For discussion, see:
@@ -144,7 +175,7 @@ const store: Store<GlobalState, Action> = createStore(
   undefined,
   compose(
     createMigration(migrations, 'migrations'),
-    applyMiddleware(...middleware),
+    applyMiddleware(...listMiddleware()),
     autoRehydrate(),
   ),
 );
