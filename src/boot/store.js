@@ -76,6 +76,15 @@ function dropCache(state: GlobalState): $Shape<GlobalState> {
   return result;
 }
 
+/**
+ * Migrations for data persisted by previous versions of the app.
+ *
+ * These are run by `redux-persist-migrate` when the previously persisted
+ * state is loaded ("rehydrated") by `redux-persist`; they transform that
+ * state object before it's applied to our live state.  The state includes
+ * a version number to track which migrations are already reflected in it,
+ * so that each only has to be run once.
+ */
 const migrations: { [string]: (GlobalState) => GlobalState } = {
   // The type is a lie, in several ways:
   //  * The actual object contains only the properties we persist:
@@ -118,6 +127,8 @@ const migrations: { [string]: (GlobalState) => GlobalState } = {
       ackedPushToken: null,
     })),
   }),
+
+  // TIP: When adding a migration, consider just using `dropCache`.
 };
 
 const reduxPersistConfig: Config = {
@@ -126,6 +137,14 @@ const reduxPersistConfig: Config = {
   storage: ZulipAsyncStorage,
 };
 
+/**
+ * The Redux store.  We store nearly all application data here.
+ *
+ * For discussion, see:
+ *  * docs/architecture.md
+ *  * docs/architecture/realtime.md
+ *  * docs/background/recommended-reading.md
+ */
 const store: Store<GlobalState, Action> = createStore(
   rootReducer,
   undefined,
@@ -136,6 +155,7 @@ const store: Store<GlobalState, Action> = createStore(
   ),
 );
 
+/** Invoke redux-persist.  We do this once at launch. */
 export const restore = (onFinished?: () => void) =>
   persistStore(store, reduxPersistConfig, onFinished);
 
