@@ -207,6 +207,18 @@ const store: Store<GlobalState, Action> = createStore(
   ),
 );
 
+/**
+ * The config options to pass to redux-persist.
+ *
+ * See upstream docs:
+ *   https://github.com/rt2zz/redux-persist/tree/v4.10.2
+ *
+ * (Why v4?  We studied v5 and determined it doesn't make sense for us to
+ * use because its design choices on migrations don't support some important
+ * kinds of migrations.  See commit 081a09806, PR #2762, and this discussion:
+ *   https://chat.zulip.org/#narrow/stream/243-mobile-team/topic/redux-persist.20v5/near/624465
+ * all from 2018-08.)
+ */
 const reduxPersistConfig: Config = {
   // The parts of our state for redux-persist to persist,
   // as keys on the top-level state.
