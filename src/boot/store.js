@@ -131,12 +131,6 @@ const migrations: { [string]: (GlobalState) => GlobalState } = {
   // TIP: When adding a migration, consider just using `dropCache`.
 };
 
-const reduxPersistConfig: Config = {
-  whitelist: [...storeKeys, ...cacheKeys],
-  // $FlowFixMe: https://github.com/rt2zz/redux-persist/issues/823
-  storage: ZulipAsyncStorage,
-};
-
 /**
  * The Redux store.  We store nearly all application data here.
  *
@@ -154,6 +148,12 @@ const store: Store<GlobalState, Action> = createStore(
     autoRehydrate(),
   ),
 );
+
+const reduxPersistConfig: Config = {
+  whitelist: [...storeKeys, ...cacheKeys],
+  // $FlowFixMe: https://github.com/rt2zz/redux-persist/issues/823
+  storage: ZulipAsyncStorage,
+};
 
 /** Invoke redux-persist.  We do this once at launch. */
 export const restore = (onFinished?: () => void) =>
